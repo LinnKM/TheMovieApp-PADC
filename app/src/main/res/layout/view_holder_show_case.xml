@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="@dimen/width_showcase"
+    android:layout_height="@dimen/height_showcase"
+    android:layout_marginStart="@dimen/margin_card_medium_2"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/ivShowCaseMovieImage"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:src="@drawable/placeholder_wolverine"
+        android:scaleType="centerCrop"/>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnPlay"
+        style="@style/Widget.MaterialComponents.Button.Icon"
+        app:elevation="@dimen/margin_medium"
+        android:elevation="@dimen/margin_medium_2"
+        android:layout_centerInParent="true"
+        app:iconTint="@color/black"
+        app:iconPadding="0dp"
+        android:insetRight="0dp"
+        android:insetLeft="0dp"
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
+        app:icon="@drawable/ic_baseline_play_arrow_black_24dp"
+        android:layout_marginTop="@dimen/margin_top_play_button"
+        android:layout_centerHorizontal="true"
+        android:backgroundTint="@color/colorAccent"
+        app:cornerRadius="@dimen/margin_large"
+        android:layout_width="@dimen/margin_xxlarge"
+        android:layout_height="@dimen/margin_xxlarge"/>
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:elevation="@dimen/margin_medium"
+        android:id="@+id/tvShowCaseMovieDate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginStart="@dimen/margin_medium_2"
+        android:layout_marginBottom="@dimen/margin_medium_2"
+        android:text="15 December 2016"
+        android:textColor="@color/colorSecondaryText" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/tvShowCaseMovieName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:elevation="@dimen/margin_medium"
+        android:layout_above="@id/tvShowCaseMovieDate"
+        android:layout_alignStart="@id/tvShowCaseMovieDate"
+        android:text="@string/lbl_show_case_movie"
+        android:textColor="@color/white"
+        android:textSize="@dimen/text_regular_2x"
+        android:textStyle="bold" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/colorShowCaseBackground"
+        android:elevation="@dimen/margin_small" />
+
+</RelativeLayout>
