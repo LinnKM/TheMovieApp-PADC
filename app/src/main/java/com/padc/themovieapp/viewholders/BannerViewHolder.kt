@@ -3,6 +3,7 @@ package com.padc.themovieapp.viewholders
 import android.view.View
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.padc.themovieapp.R
 import com.padc.themovieapp.data.vos.MovieVO
 import com.padc.themovieapp.delegates.BannerViewHolderDelegate
 import com.padc.themovieapp.utils.IMAGE_BASE_URL
@@ -18,12 +19,19 @@ class BannerViewHolder(itemView: View, private val delegate: BannerViewHolderDel
                 delegate.onTapMovieFromBanner(movie.id)
             }
         }
+
+        itemView.btnPlayBannerTrailer.setOnClickListener {
+            mMovie?.let { movie ->
+                delegate.onTapTrailerFromBanner(movie.id)
+            }
+        }
     }
 
     fun bindData(movie: MovieVO){
         mMovie = movie
         Glide.with(itemView.context)
             .load("$IMAGE_BASE_URL${movie.posterPath}")
+            .placeholder(R.drawable.solid_black_placeholder)
             .into(itemView.ivBannerImage1)
 
         itemView.tvBannerMovieName.text = movie.title

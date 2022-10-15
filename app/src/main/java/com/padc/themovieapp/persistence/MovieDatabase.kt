@@ -9,7 +9,7 @@ import com.padc.themovieapp.data.vos.MovieVO
 import com.padc.themovieapp.persistence.daos.ActorDao
 import com.padc.themovieapp.persistence.daos.MovieDao
 
-@Database(entities = [MovieVO::class, ActorVO::class], version = 2, exportSchema = false)
+@Database(entities = [MovieVO::class, ActorVO::class], version = 3, exportSchema = false)
 abstract class MovieDatabase : RoomDatabase() {
     companion object {
         const val DB_NAME = "THE_MOVIE_DB"

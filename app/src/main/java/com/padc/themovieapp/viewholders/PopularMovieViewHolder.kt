@@ -4,6 +4,7 @@ import android.graphics.Movie
 import android.view.View
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.padc.themovieapp.R
 import com.padc.themovieapp.data.vos.MovieVO
 import com.padc.themovieapp.delegates.MovieViewHolderDelegate
 import com.padc.themovieapp.utils.IMAGE_BASE_URL
@@ -24,6 +25,7 @@ class PopularMovieViewHolder(itemView: View, private val delegate: MovieViewHold
         mMovie = movie
         Glide.with(itemView.context)
             .load("$IMAGE_BASE_URL${movie.posterPath}")
+            .placeholder(R.drawable.solid_black_placeholder)
             .into(itemView.ivMovieImage)
 
         itemView.tvMovieName.text = movie.title

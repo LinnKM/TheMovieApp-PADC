@@ -10,19 +10,26 @@ import android.view.View
 import android.view.WindowManager
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.ViewModelProvider
 import com.bumptech.glide.Glide
 import com.padc.themovieapp.R
 import com.padc.themovieapp.data.models.MovieModel
 import com.padc.themovieapp.data.models.MovieModelImpl
+import com.padc.themovieapp.data.vos.ActorVO
 import com.padc.themovieapp.data.vos.GenreVO
 import com.padc.themovieapp.data.vos.MovieVO
 import com.padc.themovieapp.data.vos.TrailerVO
+import com.padc.themovieapp.mvp.presenters.MovieDetailsPresenter
+import com.padc.themovieapp.mvp.presenters.MovieDetailsPresenterImpl
+import com.padc.themovieapp.mvp.views.MovieDetailsView
 import com.padc.themovieapp.utils.IMAGE_BASE_URL
+import com.padc.themovieapp.utils.TYPE_TRAILER
 import com.padc.themovieapp.viewpods.ActorListViewPod
+import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.activity_movie_details.*
 
 
-class MovieDetailsActivity : AppCompatActivity() {
+class MovieDetailsActivity : AppCompatActivity(), MovieDetailsView {
 
     companion object {
         private const val EXTRA_MOVIE_ID = "EXTRA_MOVIE_ID"
@@ -38,16 +45,16 @@ class MovieDetailsActivity : AppCompatActivity() {
     lateinit var mActorViewPod: ActorListViewPod
     lateinit var mCreatorViewPod: ActorListViewPod
 
-    // Model
-    private val mMovieModel: MovieModel = MovieModelImpl
+    // Presenter
+    private lateinit var mPresenter: MovieDetailsPresenter
 
-    // Trailer List
-    private var mTrailerList: List<TrailerVO>? = null
     var isFavorite: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_movie_details)
+
+        setUpPresenter()
 
         window.setFlags(
             WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
@@ -60,41 +67,30 @@ class MovieDetailsActivity : AppCompatActivity() {
         // Assign MovieId
         val movieId = intent?.getIntExtra(EXTRA_MOVIE_ID, 0)
         movieId?.let { id ->
-            requestData(id)
+            mPresenter.onUiReadyInMovieDetails(this, id)
         }
+    }
+
+    private fun setUpPresenter() {
+        mPresenter = ViewModelProvider(this)[MovieDetailsPresenterImpl::class.java]
+        mPresenter.initView(this)
     }
 
     private fun setUpListeners() {
 
         // Back Button Listener
         btnBack.setOnClickListener {
-            super.onBackPressed()
+            mPresenter.onTapBack()
         }
 
         // Play Trailer Listener
         btnPlayTrailer.setOnClickListener {
-            mTrailerList?.let {
-                val intent =
-                    Intent(
-                        Intent.ACTION_VIEW,
-                        Uri.parse("https://www.youtube.com/watch?v=${it[0].key}")
-                    )
-                startActivity(intent)
-            }
+            mPresenter.onTapTrailer()
         }
 
         // Favorite Listener
         ivFavorite.setOnClickListener {
-            if (!isFavorite) {
-                ivFavorite.setImageResource(R.drawable.ic_baseline_favorite_white_24dp)
-                Toast.makeText(this, "Favorite Added", Toast.LENGTH_SHORT).show()
-                isFavorite = true
-            } else {
-                ivFavorite.setImageResource(R.drawable.ic_baseline_favorite_border_white_24dp)
-                Toast.makeText(this, "Favorite Removed", Toast.LENGTH_SHORT).show()
-
-                isFavorite = false
-            }
+            mPresenter.onTapFavourite()
         }
     }
 
@@ -115,38 +111,40 @@ class MovieDetailsActivity : AppCompatActivity() {
         )
     }
 
-    // Request Data
-    private fun requestData(movieId: Int) {
-        mMovieModel.getMovieDetails(
-            movieId = movieId.toString(),
-            onSuccess = {
-                bindData(movie = it)
-            },
-            onFailure = {
+    override fun showMovieDetails(movie: MovieVO) {
+        bindData(movie)
+    }
 
-            }
-        )
+    override fun showCreditByMovie(cast: List<ActorVO>, crew: List<ActorVO>) {
+        mActorViewPod.setData(cast)
+        mCreatorViewPod.setData(crew)
+    }
 
-        mMovieModel.getCreditsByMovie(
-            movieId = movieId.toString(),
-            onSuccess = {
-                mActorViewPod.setData(it.first)
-                mCreatorViewPod.setData(it.second)
-            },
-            onFailure = {
+    override fun navigateBack() {
+        finish()
+    }
 
-            }
-        )
+    override fun navigateToMovieTrailer(key: String) {
+        val intent =
+            Intent(
+                Intent.ACTION_VIEW,
+                Uri.parse("https://www.youtube.com/watch?v=$key")
+            )
+        startActivity(intent)
+    }
 
-        mMovieModel.getMovieTrailers(
-            movieId = movieId.toString(),
-            onSuccess = { trailerList ->
-                mTrailerList = trailerList
-            },
-            onFailure = {
+    override fun showFavourite(isFavourite: Boolean) {
+        if (isFavourite) {
+            ivFavorite.setImageResource(R.drawable.ic_baseline_favorite_border_white_24dp)
+            Toast.makeText(this, "Favorite Removed", Toast.LENGTH_SHORT).show()
+        } else {
+            ivFavorite.setImageResource(R.drawable.ic_baseline_favorite_white_24dp)
+            Toast.makeText(this, "Favorite Added", Toast.LENGTH_SHORT).show()
+        }
+    }
 
-            }
-        )
+    override fun showError(errorMessage: String) {
+        Toast.makeText(this, errorMessage, Toast.LENGTH_SHORT).show()
     }
 
     // Bind Data
@@ -156,9 +154,10 @@ class MovieDetailsActivity : AppCompatActivity() {
             .into(ivMoviePoster)
 
         tvDetailMovieName.text = movie.originalTitle ?: ""
+        toolBarMovieDetail.title = movie.originalTitle ?: ""
         tvReleaseYear.text = movie.releaseDate?.substring(0, 4) ?: "Unknown"
         tvTime.text = movie.getDurationInHourAndMinute()
-        bindGenres(movie, movie.genres?: listOf())
+        bindGenres(movie, movie.genres ?: listOf())
         rbMovieDetailRating.rating = movie.getRatingBasedOnFiveStars()
         tvMovieRating.text = movie.voteAverage?.toString() ?: ""
         movie.voteCount?.let { voteCount ->
@@ -175,15 +174,15 @@ class MovieDetailsActivity : AppCompatActivity() {
     private fun bindGenres(
         movie: MovieVO,
         genres: List<GenreVO>
-    ){
+    ) {
         movie.genres?.count()?.let { genreCount ->
-            tvFirstGenre.text = genres.firstOrNull()?.name?: ""
-            tvSecondGenre.text = genres.getOrNull(1)?.name?: ""
-            tvThirdGenre.text = genres.getOrNull(2)?.name?: ""
+            tvFirstGenre.text = genres.firstOrNull()?.name ?: ""
+            tvSecondGenre.text = genres.getOrNull(1)?.name ?: ""
+            tvThirdGenre.text = genres.getOrNull(2)?.name ?: ""
 
-            if(genreCount < 3){
+            if (genreCount < 3) {
                 tvThirdGenre.visibility = View.GONE
-            } else if(genreCount < 2){
+            } else if (genreCount < 2) {
                 tvSecondGenre.visibility = View.GONE
             }
         }

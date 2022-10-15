@@ -11,13 +11,13 @@
         android:layout_height="wrap_content">
 
         <com.google.android.material.appbar.CollapsingToolbarLayout
+            app:toolbarId="@id/toolBarMovieDetail"
             android:layout_width="match_parent"
             android:layout_height="@dimen/height_collapsing_toolbar_movie_detail"
             app:collapsedTitleTextColor="@color/white"
             app:contentScrim="@color/colorPrimaryDark"
             app:expandedTitleTextColor="@android:color/transparent"
-            app:layout_scrollFlags="scroll|exitUntilCollapsed"
-            app:title="@string/lbl_movie_detail_name">
+            app:layout_scrollFlags="scroll|exitUntilCollapsed">
 
             <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/ivMoviePoster"
@@ -132,7 +132,8 @@
 
             </RelativeLayout>
 
-            <androidx.appcompat.widget.Toolbar
+            <com.google.android.material.appbar.MaterialToolbar
+                android:id = "@+id/toolBarMovieDetail"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
                 app:layout_collapseMode="pin" />

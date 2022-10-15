@@ -39,4 +39,5 @@
     <string name="txt_premiere">8 November 2016 (World)</string>
     <string name="lbl_description">Description:</string>
     <string name="lbl_about_film">ABOUT FILM</string>
+    <string name="lbl_hint_search">Search</string>
 </resources>

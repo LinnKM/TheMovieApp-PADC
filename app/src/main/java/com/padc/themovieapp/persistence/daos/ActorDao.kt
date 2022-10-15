@@ -1,5 +1,6 @@
 package com.padc.themovieapp.persistence.daos
 
+import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
@@ -12,5 +13,5 @@ interface ActorDao {
     fun insertActors(actors: List<ActorVO>)
 
     @Query("SELECT * FROM actors")
-    fun getAllActors(): List<ActorVO>
+    fun getAllActors(): LiveData<List<ActorVO>>
 }

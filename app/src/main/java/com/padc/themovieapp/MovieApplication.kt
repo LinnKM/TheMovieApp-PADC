@@ -1,6 +1,7 @@
 package com.padc.themovieapp
 
 import android.app.Application
+import com.padc.themovieapp.data.models.BaseModel
 import com.padc.themovieapp.data.models.MovieModelImpl
 
 class MovieApplication: Application() {

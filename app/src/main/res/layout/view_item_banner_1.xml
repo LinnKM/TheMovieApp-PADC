@@ -26,6 +26,7 @@
         android:layout_marginStart="@dimen/margin_medium_2"/>
 
     <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnPlayBannerTrailer"
         style="@style/Widget.MaterialComponents.Button.Icon"
         app:iconTint="@color/black"
         app:iconPadding="0dp"
