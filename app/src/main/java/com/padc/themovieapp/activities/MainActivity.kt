@@ -13,31 +13,31 @@ import com.google.android.material.tabs.TabLayout
 import com.padc.themovieapp.R
 import com.padc.themovieapp.adapters.BannerAdapter
 import com.padc.themovieapp.adapters.ShowCaseAdapter
-import com.padc.themovieapp.data.vos.ActorVO
 import com.padc.themovieapp.data.vos.GenreVO
-import com.padc.themovieapp.data.vos.MovieVO
-import com.padc.themovieapp.mvp.presenters.MainPresenter
-import com.padc.themovieapp.mvp.presenters.MainPresenterImpl
-import com.padc.themovieapp.mvp.views.MainView
+import com.padc.themovieapp.delegates.BannerViewHolderDelegate
+import com.padc.themovieapp.delegates.MovieViewHolderDelegate
+import com.padc.themovieapp.delegates.ShowCaseViewHolderDelegate
+import com.padc.themovieapp.mvvm.MainViewModel
 import com.padc.themovieapp.viewpods.ActorListViewPod
 import com.padc.themovieapp.viewpods.MovieListViewPod
 import kotlinx.android.synthetic.main.activity_main.*
 
-class MainActivity : AppCompatActivity(), MainView {
+class MainActivity : AppCompatActivity(), BannerViewHolderDelegate, MovieViewHolderDelegate,
+    ShowCaseViewHolderDelegate {
     lateinit var mBannerAdapter: BannerAdapter
     lateinit var mShowCaseAdapter: ShowCaseAdapter
     private lateinit var mBestPopularMovieListViewPod: MovieListViewPod
     lateinit var mMoviesByGenreViewPod: MovieListViewPod
     lateinit var mPopularActorsViewPod: ActorListViewPod
 
-    // Presenter
-    private lateinit var mPresenter: MainPresenter
+    // ViewModel
+    private lateinit var mViewModel: MainViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        setUpPresenter()
+        setUpViewModel()
 
         setUpToolBar()
         setUpViewPods()
@@ -45,20 +45,30 @@ class MainActivity : AppCompatActivity(), MainView {
         setUpListeners()
         setUpShowCaseRecyclerView()
 
-        mPresenter.onUiReady(this)
+        observeLiveData()
     }
 
-    private fun setUpPresenter() {
-        mPresenter = ViewModelProvider(this)[MainPresenterImpl::class.java]
-        mPresenter.initView(this)
+    private fun setUpViewModel() {
+        mViewModel = ViewModelProvider(this)[MainViewModel::class.java]
+        mViewModel.getInitialData()
+    }
+
+    private fun observeLiveData() {
+        mViewModel.nowPlayingMovieLiveData?.observe(this, mBannerAdapter::setNewData)
+        mViewModel.popularMovieLiveData?.observe(this, mBestPopularMovieListViewPod::setData)
+        mViewModel.topRatedMovieLiveData?.observe(this, mShowCaseAdapter::setNewData)
+        mViewModel.genresLiveData.observe(this, this::setUpGenreTabLayout)
+        mViewModel.moviesByGenreLiveData.observe(this, mMoviesByGenreViewPod::setData)
+        mViewModel.actorListLiveData?.observe(this, mPopularActorsViewPod::setData)
+        mViewModel.mErrorLiveData.observe(this, this::showError)
     }
 
     private fun setUpViewPods() {
         mBestPopularMovieListViewPod = vpBestPopularMovieList as MovieListViewPod
-        mBestPopularMovieListViewPod.setUpMovieListViewPod(mPresenter)
+        mBestPopularMovieListViewPod.setUpMovieListViewPod(this)
 
         mMoviesByGenreViewPod = vpMoviesByGenre as MovieListViewPod
-        mMoviesByGenreViewPod.setUpMovieListViewPod(mPresenter)
+        mMoviesByGenreViewPod.setUpMovieListViewPod(this)
 
         mPopularActorsViewPod = vpPopularActors as ActorListViewPod
     }
@@ -68,7 +78,7 @@ class MainActivity : AppCompatActivity(), MainView {
         // Genre TabLayout Listener
         tabLayoutGenre.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab?) {
-                mPresenter.onTapGenre(tab?.position?: 0)
+                mViewModel.getMovieByGenre(tab?.position?: 0)
             }
 
             override fun onTabUnselected(tab: TabLayout.Tab?) {
@@ -80,60 +90,15 @@ class MainActivity : AppCompatActivity(), MainView {
         })
     }
 
-    override fun showNowPlayingMovies(nowPlayingMovies: List<MovieVO>) {
-        mBannerAdapter.setNewData(nowPlayingMovies)
-    }
-
-    override fun showPopularMovies(popularMovies: List<MovieVO>) {
-        mBestPopularMovieListViewPod.setData(popularMovies)
-    }
-
-    override fun showTopRateMovies(topRatedMovies: List<MovieVO>) {
-        mShowCaseAdapter.setNewData(topRatedMovies)
-    }
-
-    override fun showGenres(genreList: List<GenreVO>) {
-        setUpGenreTabLayout(genreList)
-    }
-
-    override fun showMoviesByGenre(moviesByGenre: List<MovieVO>) {
-        mMoviesByGenreViewPod.setData(moviesByGenre)
-    }
-
-    override fun showActors(actors: List<ActorVO>) {
-        mPopularActorsViewPod.setData(actors)
-    }
-
-    override fun navigateToMovieDetailsScreen(movieId: Int) {
-        startActivity(MovieDetailsActivity.newIntent(this, movieId))
-    }
-
-    override fun navigateToMovieSearchScreen() {
-        startActivity(MovieSearchActivity.newIntent(this))
-    }
-
-    override fun navigateToMovieTrailer(key: String) {
-        val intent =
-            Intent(
-                Intent.ACTION_VIEW,
-                Uri.parse("https://www.youtube.com/watch?v=$key")
-            )
-        startActivity(intent)
-    }
-
-    override fun showError(errorMessage: String) {
-        Toast.makeText(this, errorMessage, Toast.LENGTH_SHORT).show()
-    }
-
     private fun setUpShowCaseRecyclerView() {
-        mShowCaseAdapter = ShowCaseAdapter(mPresenter)
+        mShowCaseAdapter = ShowCaseAdapter(this)
         rvShowCases.adapter = mShowCaseAdapter
         rvShowCases.layoutManager =
             LinearLayoutManager(applicationContext, LinearLayoutManager.HORIZONTAL, false)
     }
 
     private fun setUpBannerViewPager() {
-        mBannerAdapter = BannerAdapter(mPresenter)
+        mBannerAdapter = BannerAdapter(this)
         viewPagerBanner.adapter = mBannerAdapter
 
         dots_indicator.attachTo(viewPagerBanner)
@@ -162,8 +127,44 @@ class MainActivity : AppCompatActivity(), MainView {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == R.id.itemSearch) {
-            mPresenter.onTapSearch()
+
         }
         return true
+    }
+
+    override fun onTapMovieFromBanner(movieId: Int) {
+        startActivity(MovieDetailsActivity.newIntent(this, movieId))
+    }
+
+    override fun onTapTrailerFromBanner(movieId: Int) {
+        navigateMovieTrailer(movieId)
+    }
+
+    override fun onTapMovie(movieId: Int) {
+        startActivity(MovieDetailsActivity.newIntent(this, movieId))
+    }
+
+    override fun onTapMovieFromShowCase(movieId: Int) {
+        startActivity(MovieDetailsActivity.newIntent(this, movieId))
+    }
+
+    override fun onTapTrailerFromShowCase(movieId: Int) {
+        navigateMovieTrailer(movieId)
+    }
+
+    private fun showError(errorMessage: String) {
+        Toast.makeText(this, errorMessage, Toast.LENGTH_SHORT).show()
+    }
+
+    private fun navigateMovieTrailer(movieId: Int) {
+        mViewModel.getMovieTrailer(movieId)
+        mViewModel.trailerLiveData.observe(this) {
+            val intent =
+                Intent(
+                    Intent.ACTION_VIEW,
+                    Uri.parse("https://www.youtube.com/watch?v=$it")
+                )
+            startActivity(intent)
+        }
     }
 }
